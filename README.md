@@ -7,7 +7,7 @@ If your GOPROXY supports a /catalog endpoint, then you can see and search the li
 ## Quick start
 
 ```bash
-~ go get marwan.io/moddoc
+~ GO111MODULE=on go install marwan.io/moddoc
 # Assuming you have a GOPROXY server running at http://localhost:3000
 ~ GOPROXY=http://localhost:3000 moddoc
 ```

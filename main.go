@@ -15,6 +15,7 @@ import (
 	"marwan.io/moddoc/proxy"
 )
 
+//go:generate statik -src=frontend/dist
 var config struct {
 	GoProxyURL string `envconfig:"GOPROXY" required:"true"`
 	Port       string `envconfig:"PORT" default:"3001"`

@@ -4,7 +4,7 @@
       <img class="logo" src="../assets/Go-Logo_White.png" alt="Go Logo">
     </div>
     <div class="h1-container">
-      <h1>The Athens Proxy Module Documentation</h1>
+      <h1>The Go Modules Proxy Documentation</h1>
     </div>
   </header>
 </template>

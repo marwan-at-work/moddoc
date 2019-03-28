@@ -1,0 +1,41 @@
+{{define "Package"}}
+<div class="Package">
+    {{template "PackageNav" .}}
+    {{template "PackageHeader" .}}
+    {{template "PackageDoc" .PackageDoc}}
+    {{template "PackageIndex" .}}
+    <!-- TODO: examples index -->
+    {{template "PackageFiles" .Files}}
+
+    {{ if gt (len .Constants) 0}}
+    <h2 id="Constants">Constants</h2>
+    {{end}}
+    {{ range .Constants }}
+    {{ template "PackageVars" .}}
+    {{ end }}
+
+    {{ if gt (len .Variables) 0}}
+    <h2 id="Variables">Variables</h2>
+    {{end}}
+    {{ range .Variables }}
+    {{ template "PackageVars" .}}
+    {{ end }}
+
+    {{ range .Funcs }}
+    {{template "PackageFunc" .}}
+    {{end}}
+
+    {{ range .Types }}
+    {{template "PackageType" .}}
+    {{end}}
+
+    {{ if gt (len .Subdirs) 0 }}
+    {{template "PackageSubdirectories" .}}
+    {{ end }}
+</div>
+<script>
+    document.querySelectorAll(".PackageDoc pre").forEach(block => {
+        hljs.highlightBlock(block);
+    });
+</script>
+{{end}}

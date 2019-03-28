@@ -1,0 +1,7 @@
+{{define "PackageFunc"}}
+<div class="PackageFunc">
+    <h2 id="{{.ID}}">func {{ .Name }}</h2>
+    <pre>{{ .SignatureString }}</pre>
+    {{template "PackageDoc" .Doc}}
+</div>
+{{end}}

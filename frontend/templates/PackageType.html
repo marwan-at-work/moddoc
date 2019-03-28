@@ -1,0 +1,23 @@
+{{define "PackageType"}}
+<div class="PackageType">
+    <h2 id="{{.Name}}">type {{ .Name }}</h2>
+    <pre>{{ .SignatureString }}</pre>
+    {{template "PackageDoc" .Doc}}
+
+    {{ range .Constants }}
+    {{template "PackageVars" .}}
+    {{end}}
+
+    {{range .Variables}}
+    {{template "PackageVars" .}}
+    {{end}}
+
+    {{ range .Funcs }}
+    {{template "PackageFunc" .}}
+    {{end}}
+
+    {{ range .Methods }}
+    {{template "PackageFunc" .}}
+    {{end}}
+</div>
+{{end}}

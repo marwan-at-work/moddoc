@@ -1,0 +1,7 @@
+{{define "PackageHeader"}}
+<div class="PackageHeader">
+    <h1>package {{ .PackageName }}</h1>
+    <h3 class="import-statement">import "{{ .ImportPath }}"</h3>
+    {{template "VersionDropDown" .}}
+</div>
+{{end}}

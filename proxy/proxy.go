@@ -36,9 +36,9 @@ func (s *service) GetDoc(ctx context.Context, mod, ver string) (*proxydoc.Docume
 		return nil, fmt.Errorf("could not make zip: %v", err)
 	}
 	modRoot := mod
-	subpkgIdx := strings.Index(mod, subpkg)
-	if subpkg != "" && subpkgIdx != -1 {
-		modRoot = strings.TrimSuffix(mod[0:subpkgIdx], "/")
+	if subpkg != "" {
+		rootIdx := len(mod) - len(subpkg)
+		modRoot = strings.TrimSuffix(mod[0:rootIdx], "/")
 	}
 	versCh := s.getVersions(ctx, modRoot)
 	defer os.RemoveAll(dir)
@@ -77,9 +77,8 @@ func (s *service) GetDoc(ctx context.Context, mod, ver string) (*proxydoc.Docume
 	}
 
 	bldr := &builder{}
-	proxyDoc, err := bldr.getGoDoc(ctx, mod, subpkg, files)
+	proxyDoc, err := bldr.getGoDoc(ctx, mod, ver, subpkg, files)
 	proxyDoc.ModuleRoot, _ = module.DecodePath(modRoot)
-	proxyDoc.ModuleVersion = ver
 	proxyDoc.Versions = <-versCh
 	return proxyDoc, err
 }

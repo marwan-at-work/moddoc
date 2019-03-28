@@ -1,0 +1,10 @@
+{{define "PackageFiles"}}
+<div class="PackageFiles">
+    <h2 id="pkg-files">Package Files</h2>
+    <div class="files-container">
+        {{ range . }}
+        <a href="#moddoc-todo">{{ .Name }}</a>
+        {{ end }}
+    </div>
+</div>
+{{ end }}

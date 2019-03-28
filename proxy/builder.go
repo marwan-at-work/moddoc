@@ -8,6 +8,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"html/template"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -20,7 +21,7 @@ type builder struct {
 	fset *token.FileSet
 }
 
-func (b *builder) getGoDoc(ctx context.Context, mod, subpkg string, files []*file) (*proxydoc.Documentation, error) {
+func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files []*file) (*proxydoc.Documentation, error) {
 	b.fset = token.NewFileSet()
 	mp := map[string]*ast.File{}
 	dirMap := map[string]struct{}{}
@@ -28,15 +29,15 @@ func (b *builder) getGoDoc(ctx context.Context, mod, subpkg string, files []*fil
 	// TODO: parse sub directories to get synopsis
 	pkgFiles := []*proxydoc.File{}
 	for _, f := range files {
-		dir, valid := getRelativeDir(f.Name, mod, subpkg)
+		if filepath.Ext(f.Name) != ".go" || strings.HasSuffix(f.Name, "_test.go") {
+			continue
+		}
+		dir, valid := getRelativeDir(f.Name, subpkg)
 		if !valid {
 			continue
 		}
 		if dir != "." {
 			dirMap[dir] = struct{}{}
-			continue
-		}
-		if filepath.Ext(f.Name) != ".go" || strings.HasSuffix(f.Name, "_test.go") {
 			continue
 		}
 		astFile, err := parser.ParseFile(b.fset, f.Name, f.Content, parser.ParseComments)
@@ -55,18 +56,20 @@ func (b *builder) getGoDoc(ctx context.Context, mod, subpkg string, files []*fil
 	d.PackageName = pkgName
 	var sb strings.Builder
 	doc.ToHTML(&sb, dpkg.Doc, nil)
-	d.PackageDoc = sb.String()
+	d.PackageDoc = template.HTML(sb.String())
 	d.ImportPath, _ = module.DecodePath(mod)
 	d.Constants = b.getConsts(dpkg.Consts)
 	d.Variables = b.getConsts(dpkg.Vars)
-	d.Funcs = b.getFuncs(dpkg.Funcs)
+	d.Funcs = b.getFuncs(dpkg.Funcs, "")
 	d.Types = b.getTypes(dpkg.Types)
 	d.Files = pkgFiles
+	d.ModuleVersion = ver
 
 	for subDir := range dirMap {
 		d.Subdirs = append(d.Subdirs, &proxydoc.Subdir{
 			Name:     subDir,
 			Synopsis: getSynopsis(subDir, files),
+			Link:     filepath.Join("/", d.ImportPath, subDir, "@v", d.ModuleVersion),
 		})
 	}
 	sort.Slice(d.Subdirs, func(i, j int) bool {
@@ -106,8 +109,8 @@ func (b *builder) getTypes(types []*doc.Type) []*proxydoc.Type {
 func (b *builder) getType(typ *doc.Type) *proxydoc.Type {
 	var t proxydoc.Type
 	t.Name = typ.Name
-	t.Funcs = b.getFuncs(typ.Funcs)
-	t.Methods = b.getFuncs(typ.Methods)
+	t.Funcs = b.getFuncs(typ.Funcs, "")
+	t.Methods = b.getFuncs(typ.Methods, t.Name)
 	spec := typ.Decl.Specs[0].(*ast.TypeSpec)
 	// todo: must use original FileSet for struct inline comments
 	if structType, ok := spec.Type.(*ast.StructType); ok {
@@ -123,7 +126,7 @@ func (b *builder) getType(typ *doc.Type) *proxydoc.Type {
 	t.SignatureString = sb.String()
 	var docStr strings.Builder
 	doc.ToHTML(&docStr, typ.Doc, nil)
-	t.Doc = docStr.String()
+	t.Doc = template.HTML(docStr.String())
 	t.Constants = b.getConsts(typ.Consts)
 	t.Variables = b.getConsts(typ.Vars)
 
@@ -161,21 +164,25 @@ func (b *builder) getField(f *ast.Field) *proxydoc.Field {
 	return &df
 }
 
-func (b *builder) getFuncs(funcs []*doc.Func) []*proxydoc.Func {
+func (b *builder) getFuncs(funcs []*doc.Func, typeName string) []*proxydoc.Func {
 	res := []*proxydoc.Func{}
 	for _, f := range funcs {
-		ff := b.getFunc(f)
+		ff := b.getFunc(f, typeName)
 		res = append(res, ff)
 	}
 	return res
 }
 
-func (b *builder) getFunc(f *doc.Func) *proxydoc.Func {
+func (b *builder) getFunc(f *doc.Func, typeName string) *proxydoc.Func {
 	var df proxydoc.Func
+	df.ID = f.Name
+	if typeName != "" {
+		df.ID = typeName + "." + f.Name
+	}
 	df.Name = f.Name
 	var docBuilder strings.Builder
 	doc.ToHTML(&docBuilder, f.Doc, nil)
-	df.Doc = docBuilder.String()
+	df.Doc = template.HTML(docBuilder.String())
 	// df.Signature = &proxydoc.FunctionSignature{} //TODO: make receiver/args/returns clickable.
 	var sb strings.Builder
 	err := format.Node(&sb, b.fset, f.Decl)
@@ -195,7 +202,7 @@ func (b *builder) getConsts(cc []*doc.Value) []*proxydoc.Value {
 		doc.ToHTML(&docBuilder, c.Doc, nil)
 		val := &proxydoc.Value{
 			IsGroup: len(c.Names) > 1,
-			Doc:     docBuilder.String(),
+			Doc:     template.HTML(docBuilder.String()),
 		}
 		if val.IsGroup {
 			for idx, n := range c.Names {
@@ -208,7 +215,7 @@ func (b *builder) getConsts(cc []*doc.Value) []*proxydoc.Value {
 					fmt.Printf("unrecognized group spec type: %T\n", c.Decl.Specs[idx])
 					return vals
 				}
-				newV.Doc = spec.Doc.Text()
+				newV.Doc = template.HTML(spec.Doc.Text())
 				b.populateConstantsValueAndType(newV, spec)
 				val.Values = append(val.Values, newV)
 			}
@@ -255,7 +262,7 @@ func (b *builder) getTypeFromSpec(spec *ast.ValueSpec) string {
 }
 
 // TODO: might be better (or not) to regex against (.+@[^/]+)/(.+)
-func getDir(zipPath, mod string) string {
+func getDir(zipPath string) string {
 	idx := strings.Index(zipPath, "@")
 	if idx == -1 {
 		idx = 0
@@ -268,20 +275,19 @@ func getDir(zipPath, mod string) string {
 	return filepath.Dir(zipPath[idx+1:])
 }
 
-func getRelativeDir(file, mod, relativeTo string) (dir string, valid bool) {
-	dir = getDir(file, mod)
-	// if module root, return all dirs so thatwe can capture sub directories
+func getRelativeDir(file, relativeTo string) (dir string, valid bool) {
+	dir = getDir(file)
+	// if module root, return all dirs so that we can capture sub directories
 	if relativeTo == "" {
 		return dir, true
 	}
 	// if outside of the relative path, it should not exist
-	idx := strings.Index(dir, relativeTo)
-	if idx == -1 {
+	if !strings.HasPrefix(dir+"/", relativeTo+"/") {
 		return dir, false
 	}
 	if dir == relativeTo {
 		return ".", true
 	}
 	// todo: ensure robust.
-	return dir[idx+len(relativeTo)+1:], true
+	return dir[len(relativeTo)+1:], true
 }

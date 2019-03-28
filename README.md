@@ -21,30 +21,6 @@ For example, http://localhost:3001/github.com/pkg/errors/@v/v0.8.1
 
 [<img width="717" alt="Screen Shot 2019-03-22 at 1 32 36 AM" src="https://user-images.githubusercontent.com/16294261/54802943-d3b6c080-4c43-11e9-8886-a294e8ed8daa.png">](https://vimeo.com/325806835)
 
-
-## Development
-
-There is a UI server as well as a backend server. You need to run both of them. 
-
-#### UI Server: 
-Make sure you have Node/NPM and the Vue CLI installed.
-
-```bash
-cd frontend && vui ui
-```
-
-The command will open up a dashboard where you can hit `tasks` and click `run task`. 
-
-
-#### Development server:
-
-```bash
-go run .
-```
-
-The UI dev server automatically proxies 
-
-
 ## Status
 
 WIP

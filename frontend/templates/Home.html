@@ -1,0 +1,40 @@
+{{define "Home"}}
+<div class="Home">
+    <div class="search-container">
+        <input id="index-search-input" placeholder="Search for modules..." class="search" type="text">
+    </div>
+    <div id="index-results" class="results-container">
+    </div>
+</div>
+
+<script>
+    const container = document.getElementById("index-results")
+    const mods = JSON.parse("{{json .}}");
+    const renderResults = (res) => {
+        setTimeout(() => {
+            const div = document.createElement("div");
+            div.classList.add("ModuleList");
+            res.forEach((mod) => {
+                const item = document.createElement("div");
+                item.classList.add("module-item");
+                const a = document.createElement("a");
+                a.href = `/${mod.module}/@v/latest`;
+                a.innerText = mod.module;
+                item.appendChild(a);
+                div.appendChild(item);
+            });
+            container.innerText = "";
+            container.innerHTML = "";
+            container.appendChild(div);
+        }, 20);
+    };
+    renderResults(mods);
+    document.getElementById("index-search-input").addEventListener("input", function (e) {
+        const value = e.target.value;
+        const fuzz = new FuzzySearch(mods, ['module']);
+        const results = fuzz.search(value);
+        renderResults(results);
+    })
+</script>
+
+{{end}}

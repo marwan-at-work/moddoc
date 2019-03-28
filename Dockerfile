@@ -6,18 +6,16 @@ WORKDIR /app
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -mod=vendor -o=/app/goproxydoc
+RUN CGO_ENABLED=0 go build -o=/app/moddoc
 
 FROM busybox
 
 RUN mkdir /app
 
-COPY --from=builder /app/goproxydoc /app/goproxydoc
+COPY --from=builder /app/moddoc /app/moddoc
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY --from=builder /app/frontend/dist /app/frontend/dist
-
 WORKDIR /app
 
-ENTRYPOINT ["/app/goproxydoc"]
+ENTRYPOINT ["/app/moddoc"]

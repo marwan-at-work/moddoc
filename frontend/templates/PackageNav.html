@@ -1,0 +1,20 @@
+{{define "PackageNav" }}
+<nav class="PackageNav">
+    <div class="left">
+        <a class="package-name" href="/todoz">{{ .PackageName }}</a>:
+        <span class="import-path">{{ .ImportPath }}</span>
+    </div>
+    <div class="right">
+        {{ $navLen := len .NavLinks }}
+        {{ $lastEl := subOne $navLen }}
+        {{ range $index, $element := .NavLinks }}
+        <span>
+            <a href="#pkg-{{toLower $element}}">{{ $element }}</a>
+            {{ if lt $index $lastEl }}
+            <span class="nav-seperator">|</span>
+            {{ end }}
+        </span>
+        {{ end }}
+    </div>
+</nav>
+{{end}}

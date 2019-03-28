@@ -1,5 +1,9 @@
 package doc
 
+import (
+	"html/template"
+)
+
 // Documentation is the data structure
 // that represents a full module page
 type Documentation struct {
@@ -8,13 +12,14 @@ type Documentation struct {
 	Versions      []string
 	ModuleRoot    string
 	ImportPath    string
-	PackageDoc    string
+	PackageDoc    template.HTML
 	Constants     []*Value
 	Variables     []*Value
 	Funcs         []*Func
 	Types         []*Type
 	Files         []*File
 	Subdirs       []*Subdir
+	NavLinks      []string
 }
 
 // Value represents one or a group of constants/variables
@@ -23,17 +28,18 @@ type Value struct {
 	Name            string
 	Value           string
 	Type            string
-	Doc             string
+	Doc             template.HTML
 	IsGroup         bool
 	Values          []*Value
 }
 
 // Func represents a function or a method
 type Func struct {
+	ID   string // Name for funcs; TypeName+FuncName for type methods.
 	Name string
 	// Signature       *FunctionSignature //TODO: later
 	SignatureString string
-	Doc             string
+	Doc             template.HTML
 	// MethodReceiver  *MethodReceiver // TODO: later
 	MethodReceiverString string
 	Examples             []*Example
@@ -62,7 +68,7 @@ type Example struct {
 // Type represents a type declaration
 type Type struct {
 	Name            string
-	Doc             string
+	Doc             template.HTML
 	Type            string
 	SignatureString string
 	Fields          []*Field
@@ -101,4 +107,5 @@ type File struct {
 type Subdir struct {
 	Name     string
 	Synopsis string
+	Link     string
 }

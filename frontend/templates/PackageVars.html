@@ -1,0 +1,6 @@
+{{define "PackageVars"}}
+<div class="PackageVars">
+    <pre>{{ .SignatureString }}</pre>
+    {{ template "PackageDoc" .Doc}}
+</div>
+{{end}}

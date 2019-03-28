@@ -1,0 +1,39 @@
+{{define "VersionDropDown"}}
+<div class="VersionDropDown">
+    <!-- <h4 @click="this.toggle"> -->
+    <button id="versions-toggle">
+        {{ .ModuleVersion }}
+        <span id="version-plus" class="arrow">+</span>
+        <span id="version-minus" class="arrow off">-</span>
+    </button>
+    <div id="version-list-container" class="list-container off">
+        {{ $imp := .ImportPath }}
+        {{ range .Versions}}
+        <div>
+            <a href="{{getVerLink $imp .}}">{{ . }}</a>
+        </div>
+        {{end}}
+    </div>
+</div>
+
+<script>
+    const el = document.getElementById("versions-toggle");
+    const plus = document.getElementById("version-plus");
+    const minus = document.getElementById("version-minus");
+    const listContainer = document.getElementById("version-list-container");
+    let isOpen = false;
+    el.addEventListener("click", () => {
+        if (isOpen) {
+            plus.classList.remove("off");
+            minus.classList.add("off");
+            listContainer.classList.add("off");
+            isOpen = false;
+        } else {
+            listContainer.classList.remove("off");
+            plus.classList.add("off");
+            minus.classList.remove("off");
+            isOpen = true;
+        }
+    });
+</script>
+{{end}}

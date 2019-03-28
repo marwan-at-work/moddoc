@@ -1,0 +1,50 @@
+{{define "PackageIndex"}}
+<div class="PackageIndex">
+    <h2 id="pkg-index">Index</h2>
+    {{ if gt (len .Constants) 0 }}
+    <div v-if="doc.constants.length" class="index-item">
+        <a href="#Constants" class="index-item-link">Constants</a>
+    </div>
+    {{end}}
+    {{ if gt (len .Variables) 0 }}
+    <div v-if="doc.variables.length" class="index-item">
+        <a href="#Variables" class="index-item-link">Variables</a>
+    </div>
+    {{ end }}
+    {{ range .Funcs }}
+    <div>
+        <div class="index-item">
+            <a href="#{{ .Name }}" class="index-item-link">{{ .SignatureString }}</a>
+        </div>
+    </div>
+    {{ end }}
+    {{ range .Types }}
+    <div>
+        <div calss="index-item">
+            <a href="#{{.Name}}" class="index-item-link">type {{ .Name }}</a>
+        </div>
+        {{ if gt (len .Funcs) 0 }}
+        <ul>
+            {{ range .Funcs }}
+            <li>
+                <a href="#{{.Name}}" class="index-item-link">{{ .SignatureString }}</a>
+            </li>
+            {{end}}
+        </ul>
+        {{ end }}
+        {{ if gt (len .Methods) 0 }}
+        {{ $typeName := .Name }}
+        <ul v-if="type.Methods && type.Methods.length">
+            {{ range .Methods }}
+            <li>
+                <a href="#{{$typeName}}.{{.Name}}" class="index-item-link">
+                    {{ .SignatureString }}
+                </a>
+            </li>
+            {{ end }}
+        </ul>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+{{end}}

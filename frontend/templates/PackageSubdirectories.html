@@ -1,0 +1,15 @@
+{{define "PackageSubdirectories"}}
+<div class="PackageSubdirectories">
+    <h2 id="pkg-directories">Directories</h2>
+    <div class="grid-container">
+        <h3>Path</h3>
+        <h3>Synopsis</h3>
+        {{range .Subdirs}}
+        <span>
+            <a href="{{.Link}}">{{ .Name }}</a>
+        </span>
+        <span>{{ .Synopsis }}</span>
+        {{end}}
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,229 @@
+#app {
+    font-family: "Avenir", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #2c3e50;
+}
+
+#app h1,
+h2,
+h3,
+h4,
+h5 {
+    font-family: "Work Sans", sans-serif;
+}
+
+.Header {
+    background-color: #00add8;
+    background-image: linear-gradient(#00a29c, #00add8);
+    height: 80px;
+    display: flex;
+    justify-content: start;
+}
+
+.Header .logo-container {
+    width: 10%;
+    min-width: 150px;
+    display: flex;
+    justify-content: center;
+}
+
+.Header .h1-container {
+    width: 80%;
+    display: flex;
+    justify-content: center;
+    min-width: 650px;
+    overflow: scroll;
+}
+
+.Header h1 {
+    color: white;
+    font-family: "Work Sans", sans-serif;
+    min-width: 650px;
+    overflow: scroll;
+    text-overflow: ellipsis;
+}
+
+.Header .logo {
+    width: 150px;
+    height: auto;
+    position: absolute;
+    top: -27px;
+}
+
+.Home .search-container {
+        margin-top: 125px;
+        display: flex;
+        justify-content: center;
+    }
+
+.Home .results-container {
+    width: 50%;
+    min-width: 680px;
+    margin: 25px auto;
+    display: flex;
+    justify-content: center;
+}
+
+.Home input {
+    border: none;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 800px;
+    padding: 7px;
+    font-size: 36px;
+    font-family: "Work Sans", sans-serif;
+}
+
+.Home input:focus,
+textarea {
+    outline: none !important;
+    border: 1px solid #00a29c;
+}
+
+.Package {
+    width: 50%;
+    min-width: 680px;
+    margin: 25px auto;
+}
+
+a:link {
+    color: #00758d;
+    margin-right: 5px;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #00758d;
+}
+
+.files-container {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.PackageDoc p {
+    font-family: "Roboto", sans-serif;
+}
+
+pre {
+    font-family: "Source Code Pro", monospace;
+    background: #eee;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    overflow: scroll;
+}
+
+.PackageFunc pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+
+.PackageIndex .index-item {
+    margin-bottom: 5px;
+}
+
+.PackageIndex a:link {
+    /* color: #00a29c; */
+    color: #00758d;
+}
+
+.PackageHeader h1 {
+    margin-bottom: 5px;
+}
+
+.PackageHeader .import-statement {
+    font-family: "Source Code Pro", monospace;
+}
+
+.PackageNav {
+    padding: 10px;
+    background: #dbeded;
+    color: #00a29c;
+    display: flex;
+    justify-content: space-between;
+    font-family: "Roboto", sans-serif;
+    border-radius: 5px;
+}
+
+.PackageNav a:link {
+    color: #00a29c;
+    font-weight: bold;
+}
+
+.PackageNav .nav-seperator {
+    padding: 0 5px;
+}
+
+.PackageNav .package-name {
+    font-weight: bold;
+}
+
+.PackageNav .package-name:hover {
+    cursor: pointer;
+}
+
+.PackageSubdirectories h2 {
+    margin-bottom: 0px;
+}
+
+.PackageSubdirectories h3 {
+    margin-bottom: 10px;
+}
+
+.PackageSubdirectories .grid-container {
+    display: grid;
+    grid-template-columns: 30% 70%;
+    grid-template-rows: auto auto;
+}
+
+.PackageSubdirectories span {
+    margin-bottom: 5px;
+    padding-bottom: 2.5px;
+    border-bottom: 1px solid #ccc;
+}
+
+.VersionDropDown .off {
+    display: none;
+}
+
+.VersionDropDown button {
+    font-weight: bold;
+    display: inline-block;
+    padding: 5px;
+    border-radius: 5px;
+    margin: 0;
+    cursor: pointer;
+    color: white;
+    background: #ce3262;
+    font-size: 16px;
+}
+
+.VersionDropDown .list-container {
+    padding: 10px;
+}
+
+.VersionDropDown button:focus {
+    outline: none !important;
+}
+
+.ModuleList {
+  height: 800px;
+  overflow: scroll;
+}
+
+.ModuleList .module-item {
+  font-size: 24px;
+  color: #00a29c;
+  padding: 5px;
+}
+

@@ -17,23 +17,25 @@
 </div>
 
 <script>
-    const el = document.getElementById("versions-toggle");
-    const plus = document.getElementById("version-plus");
-    const minus = document.getElementById("version-minus");
-    const listContainer = document.getElementById("version-list-container");
-    let isOpen = false;
-    el.addEventListener("click", () => {
-        if (isOpen) {
-            plus.classList.remove("off");
-            minus.classList.add("off");
-            listContainer.classList.add("off");
-            isOpen = false;
-        } else {
-            listContainer.classList.remove("off");
-            plus.classList.add("off");
-            minus.classList.remove("off");
-            isOpen = true;
-        }
-    });
+    (function () {
+        const el = document.getElementById("versions-toggle");
+        const plus = document.getElementById("version-plus");
+        const minus = document.getElementById("version-minus");
+        const listContainer = document.getElementById("version-list-container");
+        let isOpen = false;
+        el.addEventListener("click", () => {
+            if (isOpen) {
+                plus.classList.remove("off");
+                minus.classList.add("off");
+                listContainer.classList.add("off");
+                isOpen = false;
+            } else {
+                listContainer.classList.remove("off");
+                plus.classList.add("off");
+                minus.classList.remove("off");
+                isOpen = true;
+            }
+        });
+    })()
 </script>
 {{end}}

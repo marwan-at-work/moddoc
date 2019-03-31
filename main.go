@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -29,6 +30,15 @@ func init() {
 }
 
 var tt *template.Template
+
+func parseDev() {
+	tt = template.Must(template.New("root").Funcs(template.FuncMap{
+		"toLower":    strings.ToLower,
+		"subOne":     subOne,
+		"getVerLink": getVerLink,
+		"json":       getJSON,
+	}).ParseGlob("frontend/templates/*.html"))
+}
 
 func parse() http.FileSystem {
 	root := template.New("root").Funcs(template.FuncMap{
@@ -76,7 +86,12 @@ func main() {
 	r.HandleFunc("/", home(dist))
 	r.HandleFunc("/catalog", catalog)
 	r.Handle(docPath, getDoc(srv))
-	r.PathPrefix("/public/").Handler(http.FileServer(dist))
+	if os.Getenv("MODDOC_ENV") == "DEV" {
+		parseDev()
+		r.PathPrefix("/public/").Handler(http.FileServer(http.Dir("frontend")))
+	} else {
+		r.PathPrefix("/public/").Handler(http.FileServer(dist))
+	}
 
 	fmt.Println("listening on port :" + config.Port)
 	http.ListenAndServe(":"+config.Port, r)

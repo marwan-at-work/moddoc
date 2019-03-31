@@ -1,24 +1,33 @@
 package proxy
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/format"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"html/template"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
+
+	"marwan.io/moddoc/gocopy/modfile"
 
 	proxydoc "marwan.io/moddoc/doc"
 	"marwan.io/moddoc/gocopy/module"
 )
 
 type builder struct {
-	fset *token.FileSet
+	fset     *token.FileSet
+	examples []*doc.Example
+	mod      *modfile.File
 }
 
 func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files []*file) (*proxydoc.Documentation, error) {
@@ -28,8 +37,17 @@ func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files [
 	pkgName := ""
 	// TODO: parse sub directories to get synopsis
 	pkgFiles := []*proxydoc.File{}
+	testFiles := []*ast.File{}
 	for _, f := range files {
-		if filepath.Ext(f.Name) != ".go" || strings.HasSuffix(f.Name, "_test.go") {
+		if filepath.Base(f.Name) == "go.mod" {
+			modf, err := modfile.Parse("go.mod", f.Content, nil)
+			if err != nil {
+				return nil, err
+			}
+			b.mod = modf
+			continue
+		}
+		if filepath.Ext(f.Name) != ".go" {
 			continue
 		}
 		dir, valid := getRelativeDir(f.Name, subpkg)
@@ -44,12 +62,17 @@ func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files [
 		if err != nil {
 			return nil, err
 		}
+		if strings.HasSuffix(f.Name, "_test.go") {
+			testFiles = append(testFiles, astFile)
+			continue
+		}
 		mp[f.Name] = astFile
 		if pkgName == "" {
 			pkgName = astFile.Name.String()
 		}
 		pkgFiles = append(pkgFiles, &proxydoc.File{Name: filepath.Base(f.Name)})
 	}
+	b.examples = doc.Examples(testFiles...)
 	astPkg := &ast.Package{Name: mod, Files: mp}
 	dpkg := doc.New(astPkg, mod, doc.Mode(0))
 	var d proxydoc.Documentation
@@ -63,8 +86,8 @@ func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files [
 	d.Funcs = b.getFuncs(dpkg.Funcs, "")
 	d.Types = b.getTypes(dpkg.Types)
 	d.Files = pkgFiles
+	d.Examples = b.getExamples("")
 	d.ModuleVersion = ver
-
 	for subDir := range dirMap {
 		d.Subdirs = append(d.Subdirs, &proxydoc.Subdir{
 			Name:     subDir,
@@ -75,7 +98,37 @@ func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files [
 	sort.Slice(d.Subdirs, func(i, j int) bool {
 		return d.Subdirs[i].Name < d.Subdirs[j].Name
 	})
+
+	if b.mod != nil {
+		d.GoMod = b.getMod()
+	}
+
+	d.NavLinks = []string{"Index"}
+	if len(d.Examples) > 0 {
+		d.NavLinks = append(d.NavLinks, "Examples")
+	}
+	if len(d.Files) > 0 {
+		d.NavLinks = append(d.NavLinks, "Files")
+	}
+	if len(d.GoMod) > 0 {
+		d.NavLinks = append(d.NavLinks, "Go.mod")
+	}
+	if len(d.Subdirs) > 0 {
+		d.NavLinks = append(d.NavLinks, "Directories")
+	}
+
 	return &d, nil
+}
+
+func (b *builder) getMod() template.HTML {
+	mp := map[string]string{}
+	for _, req := range b.mod.Require {
+		mp[req.Mod.Path] = fmt.Sprintf(`/%s/@v/%s`, req.Mod.Path, req.Mod.Version)
+	}
+	for _, rep := range b.mod.Replace {
+		mp[rep.New.Path] = fmt.Sprintf(`/%s/@v/%s`, rep.New.Path, rep.New.Version)
+	}
+	return template.HTML(modfile.FormatHTML(b.mod.Syntax, mp))
 }
 
 func getSynopsis(subDir string, files []*file) string {
@@ -129,6 +182,7 @@ func (b *builder) getType(typ *doc.Type) *proxydoc.Type {
 	t.Doc = template.HTML(docStr.String())
 	t.Constants = b.getConsts(typ.Consts)
 	t.Variables = b.getConsts(typ.Vars)
+	t.Examples = b.getExamples(t.Name)
 
 	return &t
 }
@@ -191,6 +245,11 @@ func (b *builder) getFunc(f *doc.Func, typeName string) *proxydoc.Func {
 	}
 	df.SignatureString = sb.String()
 	df.MethodReceiverString = f.Recv
+	examplePrefix := df.Name
+	if typeName != "" {
+		examplePrefix += "_" + typeName
+	}
+	df.Examples = b.getExamples(examplePrefix)
 
 	return &df
 }
@@ -290,4 +349,77 @@ func getRelativeDir(file, relativeTo string) (dir string, valid bool) {
 	}
 	// todo: ensure robust.
 	return dir[len(relativeTo)+1:], true
+}
+
+func (b *builder) getExamples(name string) []*proxydoc.Example {
+	var docs []*proxydoc.Example
+	for _, e := range b.examples {
+		if !strings.HasPrefix(e.Name, name) {
+			continue
+		}
+		n := e.Name[len(name):]
+		if n != "" {
+			if i := strings.LastIndex(n, "_"); i != 0 {
+				continue
+			}
+			n = n[1:]
+			if startsWithUppercase(n) {
+				continue
+			}
+			n = strings.Title(n)
+		}
+
+		var codeBuilder strings.Builder
+		var nn interface{}
+		if _, ok := e.Code.(*ast.File); ok {
+			nn = e.Play
+		} else {
+			nn = &printer.CommentedNode{Node: e.Code, Comments: e.Comments}
+		}
+		err := (&printer.Config{Mode: printer.UseSpaces, Tabwidth: 4}).Fprint(&codeBuilder, b.fset, nn)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		code, output := fmtExampleCode(codeBuilder.String(), e.Output)
+
+		docs = append(docs, &proxydoc.Example{
+			ID:   "Example" + name + "--" + n,
+			Name: n,
+			Doc:  e.Doc,
+			Code: code,
+			// Code:   code,
+			Output: output,
+			// Play:   play,
+		})
+	}
+	return docs
+}
+
+var exampleOutputRx = regexp.MustCompile(`(?i)//[[:space:]]*output:`)
+
+func fmtExampleCode(s, output string) (string, string) {
+	buf := []byte(s)
+
+	// additional formatting if this is a function body
+	if i := len(buf); i >= 2 && buf[0] == '{' && buf[i-1] == '}' {
+		// remove surrounding braces
+		buf = buf[1 : i-1]
+		// unindent
+		buf = bytes.Replace(buf, []byte("\n    "), []byte("\n"), -1)
+		// remove output comment
+		if j := exampleOutputRx.FindIndex(buf); j != nil {
+			buf = bytes.TrimSpace(buf[:j[0]])
+		}
+	} else {
+		// drop output, as the output comment will appear in the code
+		output = ""
+	}
+	return string(buf), output
+}
+
+func startsWithUppercase(s string) bool {
+	r, _ := utf8.DecodeRuneInString(s)
+	return unicode.IsUpper(r)
 }

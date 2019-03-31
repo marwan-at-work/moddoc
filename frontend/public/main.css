@@ -90,6 +90,10 @@ textarea {
 
 a:link {
     color: #00758d;
+    
+}
+
+.PackageFiles a {
     margin-right: 5px;
 }
 
@@ -162,7 +166,7 @@ pre {
 }
 
 .PackageNav .nav-seperator {
-    padding: 0 5px;
+    padding: 0 0px;
 }
 
 .PackageNav .package-name {
@@ -228,3 +232,42 @@ pre {
   padding: 5px;
 }
 
+.PackageExample {
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.PackageExample .PackageExampleHeader {
+    cursor: pointer;
+    font-weight: bold;
+    border-bottom: 1px solid #00758d;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.PackageExample .PackageExampleBody {
+    background: rgb(235, 243, 248);
+    border-radius: 10px;
+    padding: 5px 8px 5px 8px;
+}
+
+.PackageExampleBody pre {
+    margin-bottom: 10px;
+}
+
+.displayOff {
+    display: none;
+}
+
+
+.GoModContainer {
+    background: #fafafa;
+}
+
+.GoModContainer span {
+    color: #a626a4;
+}
+
+.GoModContainer i {
+    color: #00758d;
+}

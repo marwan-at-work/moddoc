@@ -2,12 +2,12 @@
 <div class="PackageIndex">
     <h2 id="pkg-index">Index</h2>
     {{ if gt (len .Constants) 0 }}
-    <div v-if="doc.constants.length" class="index-item">
+    <div class="index-item">
         <a href="#Constants" class="index-item-link">Constants</a>
     </div>
     {{end}}
     {{ if gt (len .Variables) 0 }}
-    <div v-if="doc.variables.length" class="index-item">
+    <div class="index-item">
         <a href="#Variables" class="index-item-link">Variables</a>
     </div>
     {{ end }}
@@ -34,7 +34,7 @@
         {{ end }}
         {{ if gt (len .Methods) 0 }}
         {{ $typeName := .Name }}
-        <ul v-if="type.Methods && type.Methods.length">
+        <ul>
             {{ range .Methods }}
             <li>
                 <a href="#{{$typeName}}.{{.Name}}" class="index-item-link">
@@ -46,5 +46,51 @@
         {{end}}
     </div>
     {{end}}
+    {{ if gt (len .Examples) 0 }}
+    <h2 id="pkg-index">Examples</h2>
+    {{range .Examples}}
+    <div>
+        <div class="index-item">
+            <a href="#{{ .ID }}" class="index-item-link">Example ({{ .Name }})</a>
+        </div>
+    </div>
+    {{end}}
+    {{range .Funcs}}
+    {{range .Examples}}
+    <div>
+        <div class="index-item">
+            <a href="#{{ .ID }}" class="index-item-link">Example ({{ .Name }})</a>
+        </div>
+    </div>
+    {{end}}
+    {{end}}
+    {{range .Types}}
+    {{range .Examples}}
+    <div>
+        <div class="index-item">
+            <a href="#{{ .ID }}" class="index-item-link">Example ({{ .Name }})</a>
+        </div>
+    </div>
+    {{end}}
+    {{range .Funcs}}
+    {{range .Examples}}
+    <div>
+        <div class="index-item">
+            <a href="#{{ .ID }}" class="index-item-link">Example ({{ .Name }})</a>
+        </div>
+    </div>
+    {{end}}
+    {{end}}
+    {{range .Methods}}
+    {{range .Examples}}
+    <div>
+        <div class="index-item">
+            <a href="#{{ .ID }}" class="index-item-link">Example ({{ .Name }})</a>
+        </div>
+    </div>
+    {{end}}
+    {{end}}
+    {{end}}
+    {{ end }}
 </div>
 {{end}}

@@ -1,0 +1,19 @@
+{{define "PackageExample"}}
+<div class="PackageExample">
+    <div id="{{.ID}}" class="PackageExampleHeader">Example ({{ .Name }})</div>
+    <div id="{{.ID}}-body" class="PackageExampleBody displayOff">
+        {{template "PackageDoc" .Doc}}
+        <pre>{{ .Code }}</pre>
+        <div>Output:</div>
+        <pre>{{.Output}}</pre>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const header = document.getElementById("{{.ID}}")
+        const body = document.getElementById("{{.ID}}-body")
+        header.addEventListener("click", () => body.classList.toggle("displayOff"));
+    })();
+</script>
+{{end}}

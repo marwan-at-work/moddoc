@@ -10,10 +10,10 @@
         {{ range $index, $element := .NavLinks }}
         <span>
             <a href="#pkg-{{toLower $element}}">{{ $element }}</a>
-            {{ if lt $index $lastEl }}
-            <span class="nav-seperator">|</span>
-            {{ end }}
         </span>
+        {{ if lt $index $lastEl }}
+        <span class="nav-seperator">|</span>
+        {{ end }}
         {{ end }}
     </div>
 </nav>

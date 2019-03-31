@@ -3,19 +3,19 @@
     {{template "PackageNav" .}}
     {{template "PackageHeader" .}}
     {{template "PackageDoc" .PackageDoc}}
+    {{template "PackageExamples" .Examples}}
     {{template "PackageIndex" .}}
-    <!-- TODO: examples index -->
     {{template "PackageFiles" .Files}}
 
     {{ if gt (len .Constants) 0}}
-    <h2 id="Constants">Constants</h2>
+    <h2 id="pkg-constants">Constants</h2>
     {{end}}
     {{ range .Constants }}
     {{ template "PackageVars" .}}
     {{ end }}
 
     {{ if gt (len .Variables) 0}}
-    <h2 id="Variables">Variables</h2>
+    <h2 id="pkg-variables">Variables</h2>
     {{end}}
     {{ range .Variables }}
     {{ template "PackageVars" .}}
@@ -29,12 +29,17 @@
     {{template "PackageType" .}}
     {{end}}
 
+    {{if .GoMod}}
+    <h2 id="pkg-go.mod">Go.mod</h2>
+    {{.GoMod}}
+    {{end}}
+
     {{ if gt (len .Subdirs) 0 }}
     {{template "PackageSubdirectories" .}}
     {{ end }}
 </div>
 <script>
-    document.querySelectorAll(".PackageDoc pre").forEach(block => {
+    document.querySelectorAll("pre:not(.GoModContainer)").forEach(block => {
         hljs.highlightBlock(block);
     });
 </script>

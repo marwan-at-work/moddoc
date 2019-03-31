@@ -13,6 +13,7 @@ type Documentation struct {
 	ModuleRoot    string
 	ImportPath    string
 	PackageDoc    template.HTML
+	Examples      []*Example
 	Constants     []*Value
 	Variables     []*Value
 	Funcs         []*Func
@@ -20,6 +21,7 @@ type Documentation struct {
 	Files         []*File
 	Subdirs       []*Subdir
 	NavLinks      []string
+	GoMod         template.HTML
 }
 
 // Value represents one or a group of constants/variables
@@ -60,7 +62,9 @@ type Argument struct {
 
 // Example represents a type or function example
 type Example struct {
+	ID     string
 	Name   string
+	Doc    string
 	Code   string
 	Output string
 }

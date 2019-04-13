@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"marwan.io/moddoc/fetch"
 )
 
 type listResp struct {
@@ -23,7 +25,7 @@ type moduleIndex struct {
 
 func catalog(w http.ResponseWriter, r *http.Request) {
 	url := strings.TrimSuffix(config.GoProxyURL, "/") + "/catalog"
-	resp, err := http.Get(url)
+	resp, err := fetch.Fetch(r.Context(), url)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	proxydoc "marwan.io/moddoc/doc"
+	"marwan.io/moddoc/fetch"
 	"marwan.io/moddoc/gocopy/module"
 )
 
@@ -144,10 +145,6 @@ func (s *service) makeZip(ctx context.Context, mod, ver string) (string, string,
 }
 
 func (s *service) fetch(ctx context.Context, mod, ver, ext string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", s.url+"/"+mod+"/@v/"+ver+ext, nil)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	return http.DefaultClient.Do(req)
+	url := s.url + "/" + mod + "/@v/" + ver + ext
+	return fetch.Fetch(ctx, url)
 }

@@ -79,3 +79,61 @@ func TestGetDir(t *testing.T) {
 		})
 	}
 }
+
+var longestPathTestCases = []struct {
+	dir      string
+	mods     []*modFile
+	expected string
+}{
+	{
+		dir: "github.com/pkg/errors",
+		mods: []*modFile{
+			{path: "github.com/pkg/errors"},
+		},
+		expected: "github.com/pkg/errors",
+	},
+	{
+		dir: "github.com/pkg/errors",
+		mods: []*modFile{
+			{path: "github.com/pkg/errors"},
+			{path: "github.com/pkg/errors/internal"},
+			{path: "github.com/pkg/other"},
+		},
+		expected: "github.com/pkg/errors",
+	},
+	{
+		dir: "github.com/pkg/errors/internal",
+		mods: []*modFile{
+			{path: "github.com/pkg/errors"},
+			{path: "github.com/pkg/errors/internal"},
+			{path: "github.com/pkg/other"},
+		},
+		expected: "github.com/pkg/errors/internal",
+	},
+	{
+		dir: "github.com/NYTimes/gizmo/examples/server",
+		mods: []*modFile{
+			{path: "github.com/NYTimes/gizmo"},
+			{path: "github.com/NYTimes/gizmo/examples"},
+		},
+		expected: "github.com/NYTimes/gizmo/examples",
+	},
+}
+
+func TestLongestPath(t *testing.T) {
+	for idx, tc := range longestPathTestCases {
+		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+			b := &builder{mods: tc.mods}
+			mf := b.getClosestModFile(tc.dir)
+			if mf == nil && tc.expected != "" {
+				t.Fatal("nil modfile")
+			}
+			if tc.expected == "" && mf != nil {
+				t.Fatalf("expected no modfile but got %+v", mf)
+			}
+			if mf.path != tc.expected {
+				t.Fatalf("expected %v but got %v", tc.expected, mf.path)
+			}
+		})
+	}
+}

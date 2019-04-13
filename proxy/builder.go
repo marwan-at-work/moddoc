@@ -18,16 +18,15 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"marwan.io/moddoc/gocopy/modfile"
-
 	proxydoc "marwan.io/moddoc/doc"
+	"marwan.io/moddoc/gocopy/modfile"
 	"marwan.io/moddoc/gocopy/module"
 )
 
 type builder struct {
 	fset     *token.FileSet
 	examples []*doc.Example
-	mod      *modfile.File
+	mods     []*modFile
 }
 
 func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files []*file) (*proxydoc.Documentation, error) {
@@ -44,7 +43,7 @@ func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files [
 			if err != nil {
 				return nil, err
 			}
-			b.mod = modf
+			b.mods = append(b.mods, &modFile{path: filepath.Dir(f.Name), file: modf})
 			continue
 		}
 		if filepath.Ext(f.Name) != ".go" {
@@ -99,8 +98,9 @@ func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files [
 		return d.Subdirs[i].Name < d.Subdirs[j].Name
 	})
 
-	if b.mod != nil {
-		d.GoMod = b.getMod()
+	if len(b.mods) > 0 {
+		modf := b.getClosestModFile(mod)
+		d.GoMod = b.getMod(modf.file)
 	}
 
 	d.NavLinks = []string{"Index"}
@@ -120,15 +120,15 @@ func (b *builder) getGoDoc(ctx context.Context, mod, ver, subpkg string, files [
 	return &d, nil
 }
 
-func (b *builder) getMod() template.HTML {
+func (b *builder) getMod(mod *modfile.File) template.HTML {
 	mp := map[string]string{}
-	for _, req := range b.mod.Require {
+	for _, req := range mod.Require {
 		mp[req.Mod.Path] = fmt.Sprintf(`/%s/@v/%s`, req.Mod.Path, req.Mod.Version)
 	}
-	for _, rep := range b.mod.Replace {
+	for _, rep := range mod.Replace {
 		mp[rep.New.Path] = fmt.Sprintf(`/%s/@v/%s`, rep.New.Path, rep.New.Version)
 	}
-	return template.HTML(modfile.FormatHTML(b.mod.Syntax, mp))
+	return template.HTML(modfile.FormatHTML(mod.Syntax, mp))
 }
 
 func getSynopsis(subDir string, files []*file) string {
@@ -385,16 +385,37 @@ func (b *builder) getExamples(name string) []*proxydoc.Example {
 		code, output := fmtExampleCode(codeBuilder.String(), e.Output)
 
 		docs = append(docs, &proxydoc.Example{
-			ID:   "Example" + name + "--" + n,
-			Name: n,
-			Doc:  e.Doc,
-			Code: code,
-			// Code:   code,
+			ID:     "Example" + name + "--" + n,
+			Name:   n,
+			Doc:    e.Doc,
+			Code:   code,
 			Output: output,
 			// Play:   play,
 		})
 	}
 	return docs
+}
+
+type modFile struct {
+	path string
+	file *modfile.File
+}
+
+func (b *builder) getClosestModFile(dir string) *modFile {
+	if len(b.mods) == 1 {
+		return b.mods[0]
+	}
+
+	var longest *modFile
+	for _, m := range b.mods {
+		if longest != nil && len(longest.path) > len(m.path) {
+			continue
+		}
+		if strings.HasPrefix(dir, m.path) {
+			longest = m
+		}
+	}
+	return longest
 }
 
 var exampleOutputRx = regexp.MustCompile(`(?i)//[[:space:]]*output:`)

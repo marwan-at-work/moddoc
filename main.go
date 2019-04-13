@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/rakyll/statik/fs"
+	"marwan.io/moddoc/fetch"
 	"marwan.io/moddoc/proxy"
 )
 
@@ -23,6 +23,7 @@ import (
 var config struct {
 	GoProxyURL string `envconfig:"GOPROXY" required:"true"`
 	Port       string `envconfig:"PORT" default:"3001"`
+	ENV        string `envconfig:"MODDOC_ENV"`
 }
 
 func init() {
@@ -86,7 +87,7 @@ func main() {
 	r.HandleFunc("/", home(dist))
 	r.HandleFunc("/catalog", catalog)
 	r.Handle(docPath, getDoc(srv))
-	if os.Getenv("MODDOC_ENV") == "DEV" {
+	if config.ENV == "DEV" {
 		parseDev()
 		r.PathPrefix("/public/").Handler(http.FileServer(http.Dir("frontend")))
 	} else {
@@ -100,7 +101,7 @@ func main() {
 func home(fs http.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		url := strings.TrimSuffix(config.GoProxyURL, "/") + "/catalog"
-		resp, err := http.Get(url)
+		resp, err := fetch.Fetch(r.Context(), url)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return

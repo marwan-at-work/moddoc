@@ -18,7 +18,7 @@
                 const item = document.createElement("div");
                 item.classList.add("module-item");
                 const a = document.createElement("a");
-                a.href = `/${mod.module}/@v/latest`;
+                a.href = `/${mod.module}/@v/${mod.latest}`;
                 a.innerText = mod.module;
                 item.appendChild(a);
                 div.appendChild(item);

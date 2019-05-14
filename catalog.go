@@ -21,6 +21,7 @@ type module struct {
 type moduleIndex struct {
 	Module   string   `json:"module"`
 	Versions []string `json:"versions"`
+	Latest   string   `json:"latest"`
 }
 
 func catalog(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +48,11 @@ func catalog(w http.ResponseWriter, r *http.Request) {
 	}
 	mods := []*moduleIndex{}
 	for mod, vers := range mp {
-		mods = append(mods, &moduleIndex{mod, vers})
+		mods = append(mods, &moduleIndex{
+			mod,
+			vers,
+			latestVer(vers),
+		})
 	}
 	json.NewEncoder(w).Encode(mods)
 }

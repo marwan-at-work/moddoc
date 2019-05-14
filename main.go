@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	// embedded files
@@ -16,6 +18,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/rakyll/statik/fs"
 	"marwan.io/moddoc/fetch"
+	"marwan.io/moddoc/gocopy/semver"
 	"marwan.io/moddoc/proxy"
 )
 
@@ -38,6 +41,7 @@ func parseDev() {
 		"subOne":     subOne,
 		"getVerLink": getVerLink,
 		"json":       getJSON,
+		"latestVer":  latestVer,
 	}).ParseGlob("frontend/templates/*.html"))
 }
 
@@ -47,37 +51,25 @@ func parse() http.FileSystem {
 		"subOne":     subOne,
 		"getVerLink": getVerLink,
 		"json":       getJSON,
+		"latestVer":  latestVer,
 	})
 	dist, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
+	must(err)
 	hf, err := dist.Open("/templates")
-	if err != nil {
-		panic(err)
-	}
+	must(err)
 	dir, err := hf.Readdir(-1)
-	if err != nil {
-		panic(err)
-	}
+	must(err)
 	for _, fi := range dir {
 		f, err := dist.Open("/templates/" + fi.Name())
-		if err != nil {
-			panic(err)
-		}
+		must(err)
 		defer f.Close()
 		bts, err := ioutil.ReadAll(f)
-		if err != nil {
-			panic(err)
-		}
+		must(err)
 		root, err = root.New(fi.Name()).Parse(string(bts))
-		if err != nil {
-			panic(err)
-		}
+		must(err)
 	}
 	tt = root
 	return dist
-
 }
 
 func main() {
@@ -100,30 +92,9 @@ func main() {
 
 func home(fs http.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		url := strings.TrimSuffix(config.GoProxyURL, "/") + "/catalog"
-		resp, err := fetch.Fetch(r.Context(), url)
+		mods, err := getCatalogModules(r.Context())
 		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != 200 {
-			http.Error(w, "unexpected status: "+resp.Status, resp.StatusCode)
-			return
-		}
-		var lr listResp
-		err = json.NewDecoder(resp.Body).Decode(&lr)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-		mp := map[string][]string{}
-		for _, m := range lr.Modules {
-			mp[m.Module] = append(mp[m.Module], m.Version)
-		}
-		mods := []*moduleIndex{}
-		for mod, vers := range mp {
-			mods = append(mods, &moduleIndex{mod, vers})
+			mods, _ = index(r.Context())
 		}
 		err = tt.Lookup("index.html").Execute(w, map[string]interface{}{
 			"index": true,
@@ -133,6 +104,36 @@ func home(fs http.FileSystem) http.HandlerFunc {
 			fmt.Println(err)
 		}
 	}
+}
+
+func getCatalogModules(ctx context.Context) ([]*moduleIndex, error) {
+	url := strings.TrimSuffix(config.GoProxyURL, "/") + "/catalog"
+	resp, err := fetch.Fetch(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("unexpected status: %v", resp.StatusCode)
+	}
+	var lr listResp
+	err = json.NewDecoder(resp.Body).Decode(&lr)
+	if err != nil {
+		return nil, err
+	}
+	mp := map[string][]string{}
+	for _, m := range lr.Modules {
+		mp[m.Module] = append(mp[m.Module], m.Version)
+	}
+	mods := []*moduleIndex{}
+	for mod, vers := range mp {
+		mods = append(mods, &moduleIndex{
+			mod,
+			vers,
+			latestVer(vers),
+		})
+	}
+	return mods, nil
 }
 
 func subOne(i int) int {
@@ -146,4 +147,28 @@ func getVerLink(importPath, version string) string {
 func getJSON(i interface{}) string {
 	bts, _ := json.Marshal(i)
 	return string(bts)
+}
+
+func latestVer(vers []string) string {
+	sortVersions(vers)
+	if len(vers) == 0 {
+		return "latest"
+	}
+	return vers[0]
+}
+
+func sortVersions(list []string) {
+	sort.Slice(list, func(i, j int) bool {
+		cmp := semver.Compare(list[i], list[j])
+		if cmp != 0 {
+			return cmp < 0
+		}
+		return list[i] < list[j]
+	})
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

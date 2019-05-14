@@ -34,14 +34,14 @@ h5 {
     display: flex;
     justify-content: center;
     min-width: 650px;
-    overflow: scroll;
+    /* overflow: scroll; */
 }
 
 .Header h1 {
     color: white;
     font-family: "Work Sans", sans-serif;
     min-width: 650px;
-    overflow: scroll;
+    /* overflow: scroll; */
     text-overflow: ellipsis;
 }
 

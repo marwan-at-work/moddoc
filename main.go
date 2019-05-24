@@ -94,6 +94,7 @@ func home(fs http.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		mods, err := getCatalogModules(r.Context())
 		if err != nil {
+			fmt.Printf("Error while retrieving catalog from proxy: [%s]\nFallback to publick index", err)
 			mods, _ = index(r.Context())
 		}
 		err = tt.Lookup("index.html").Execute(w, map[string]interface{}{

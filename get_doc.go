@@ -8,7 +8,7 @@ import (
 	"marwan.io/moddoc/proxy"
 )
 
-var docPath = "/{module:.+}/@v/{version}"
+const docPath = "/{module:.+}/@v/{version}"
 
 func getDoc(proxy proxy.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

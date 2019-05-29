@@ -32,6 +32,7 @@ var config struct {
 
 func init() {
 	envconfig.MustProcess("", &config)
+	config.GoProxyURL = parseProxyURL(config.GoProxyURL)
 }
 
 var tt *template.Template
@@ -88,8 +89,7 @@ func parseProxyURL(s string) string {
 
 func main() {
 	r := mux.NewRouter()
-	proxyURL := parseProxyURL(config.GoProxyURL)
-	srv := proxy.NewService(proxyURL)
+	srv := proxy.NewService(config.GoProxyURL)
 	dist := parse()
 	r.HandleFunc("/", home(dist))
 	r.HandleFunc("/catalog", catalog)
@@ -109,7 +109,7 @@ func home(fs http.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		mods, err := getCatalogModules(r.Context())
 		if err != nil {
-			fmt.Printf("Error while retrieving catalog from proxy: [%s]\nFallback to public index", err)
+			fmt.Printf("Error while retrieving catalog from proxy: [%s]\nFallback to public index\n", err)
 			mods, _ = index(r.Context())
 		}
 		err = tt.Lookup("index.html").Execute(w, map[string]interface{}{

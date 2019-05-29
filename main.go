@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"path/filepath"
 	"sort"
@@ -72,9 +73,23 @@ func parse() http.FileSystem {
 	return dist
 }
 
+func parseProxyURL(s string) string {
+	proxyURL := strings.Split(s, ",")[0]
+	switch proxyURL {
+	case "":
+		log.Fatal("GOPROXY's first argument must not be empty")
+	case "direct":
+		log.Fatal("cannot use 'direct' as a GOPROXY destination")
+	case "off":
+		log.Fatal("cannot use 'off' as a GOPROXY destination")
+	}
+	return proxyURL
+}
+
 func main() {
 	r := mux.NewRouter()
-	srv := proxy.NewService(config.GoProxyURL)
+	proxyURL := parseProxyURL(config.GoProxyURL)
+	srv := proxy.NewService(proxyURL)
 	dist := parse()
 	r.HandleFunc("/", home(dist))
 	r.HandleFunc("/catalog", catalog)

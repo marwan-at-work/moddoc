@@ -175,13 +175,7 @@ func latestVer(vers []string) string {
 }
 
 func sortVersions(list []string) {
-	sort.Slice(list, func(i, j int) bool {
-		cmp := semver.Compare(list[i], list[j])
-		if cmp != 0 {
-			return cmp < 0
-		}
-		return list[i] < list[j]
-	})
+	sort.Slice(list, func(i, j int) bool { return semver.Compare(list[i], list[j]) > 0 })
 }
 
 func must(err error) {

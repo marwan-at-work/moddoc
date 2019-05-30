@@ -91,15 +91,16 @@ func main() {
 	r := mux.NewRouter()
 	srv := proxy.NewService(config.GoProxyURL)
 	dist := parse()
-	r.HandleFunc("/", home(dist))
-	r.HandleFunc("/catalog", catalog)
+	r.Handle("/", home(dist))
 	r.Handle(docPath, getDoc(srv))
+	r.HandleFunc("/catalog", catalog)
 	if config.ENV == "DEV" {
 		parseDev()
 		r.PathPrefix("/public/").Handler(http.FileServer(http.Dir("frontend")))
 	} else {
 		r.PathPrefix("/public/").Handler(http.FileServer(dist))
 	}
+	r.NotFoundHandler = http.HandlerFunc(getModule)
 
 	fmt.Println("listening on port :" + config.Port)
 	http.ListenAndServe(":"+config.Port, r)

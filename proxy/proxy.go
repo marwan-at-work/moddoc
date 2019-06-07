@@ -79,6 +79,9 @@ func (s *service) GetDoc(ctx context.Context, mod, ver string) (*proxydoc.Docume
 
 	bldr := &builder{}
 	proxyDoc, err := bldr.getGoDoc(ctx, mod, ver, subpkg, files)
+	if err != nil {
+		return nil, err
+	}
 	proxyDoc.ModuleRoot, _ = module.DecodePath(modRoot)
 	proxyDoc.Versions = <-versCh
 	return proxyDoc, err

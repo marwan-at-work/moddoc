@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"path/filepath"
 	"sort"
@@ -31,6 +32,7 @@ var config struct {
 
 func init() {
 	envconfig.MustProcess("", &config)
+	config.GoProxyURL = parseProxyURL(config.GoProxyURL)
 }
 
 var tt *template.Template
@@ -74,19 +76,33 @@ func parse() http.FileSystem {
 	return dist
 }
 
+func parseProxyURL(s string) string {
+	proxyURL := strings.Split(s, ",")[0]
+	switch proxyURL {
+	case "":
+		log.Fatal("GOPROXY's first argument must not be empty")
+	case "direct":
+		log.Fatal("cannot use 'direct' as a GOPROXY destination")
+	case "off":
+		log.Fatal("cannot use 'off' as a GOPROXY destination")
+	}
+	return proxyURL
+}
+
 func main() {
 	r := mux.NewRouter()
 	srv := proxy.NewService(config.GoProxyURL)
 	dist := parse()
-	r.HandleFunc("/", home(dist))
-	r.HandleFunc("/catalog", catalog)
+	r.Handle("/", home(dist))
 	r.Handle(docPath, getDoc(srv))
+	r.HandleFunc("/catalog", catalog)
 	if config.ENV == "DEV" {
 		parseDev()
 		r.PathPrefix("/public/").Handler(http.FileServer(http.Dir("frontend")))
 	} else {
 		r.PathPrefix("/public/").Handler(http.FileServer(dist))
 	}
+	r.NotFoundHandler = http.HandlerFunc(getModule)
 
 	fmt.Println("listening on port :" + config.Port)
 	http.ListenAndServe(":"+config.Port, r)
@@ -96,7 +112,7 @@ func home(fs http.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		mods, err := getCatalogModules(r.Context())
 		if err != nil {
-			fmt.Printf("Error while retrieving catalog from proxy: [%s]\nFallback to public index", err)
+			fmt.Printf("Error while retrieving catalog from proxy: [%s]\nFallback to public index\n", err)
 			mods, _ = index(r.Context())
 		}
 		err = tt.Lookup("index.html").Execute(w, map[string]interface{}{
@@ -161,13 +177,7 @@ func latestVer(vers []string) string {
 }
 
 func sortVersions(list []string) {
-	sort.Slice(list, func(i, j int) bool {
-		cmp := semver.Compare(list[i], list[j])
-		if cmp != 0 {
-			return cmp < 0
-		}
-		return list[i] < list[j]
-	})
+	sort.Slice(list, func(i, j int) bool { return semver.Compare(list[i], list[j]) > 0 })
 }
 
 func methodReceiver(receiver string) string {

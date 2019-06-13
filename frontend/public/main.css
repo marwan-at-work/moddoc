@@ -261,6 +261,7 @@ pre {
 
 
 .GoModContainer {
+    overflow: auto;
     background: #fafafa;
 }
 

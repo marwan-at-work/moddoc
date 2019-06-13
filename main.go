@@ -37,21 +37,23 @@ var tt *template.Template
 
 func parseDev() {
 	tt = template.Must(template.New("root").Funcs(template.FuncMap{
-		"toLower":    strings.ToLower,
-		"subOne":     subOne,
-		"getVerLink": getVerLink,
-		"json":       getJSON,
-		"latestVer":  latestVer,
+		"toLower":        strings.ToLower,
+		"subOne":         subOne,
+		"getVerLink":     getVerLink,
+		"json":           getJSON,
+		"latestVer":      latestVer,
+		"methodReceiver": methodReceiver,
 	}).ParseGlob("frontend/templates/*.html"))
 }
 
 func parse() http.FileSystem {
 	root := template.New("root").Funcs(template.FuncMap{
-		"toLower":    strings.ToLower,
-		"subOne":     subOne,
-		"getVerLink": getVerLink,
-		"json":       getJSON,
-		"latestVer":  latestVer,
+		"toLower":        strings.ToLower,
+		"subOne":         subOne,
+		"getVerLink":     getVerLink,
+		"json":           getJSON,
+		"latestVer":      latestVer,
+		"methodReceiver": methodReceiver,
 	})
 	dist, err := fs.New()
 	must(err)
@@ -94,6 +96,7 @@ func home(fs http.FileSystem) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		mods, err := getCatalogModules(r.Context())
 		if err != nil {
+			fmt.Printf("Error while retrieving catalog from proxy: [%s]\nFallback to public index", err)
 			mods, _ = index(r.Context())
 		}
 		err = tt.Lookup("index.html").Execute(w, map[string]interface{}{
@@ -165,6 +168,14 @@ func sortVersions(list []string) {
 		}
 		return list[i] < list[j]
 	})
+}
+
+func methodReceiver(receiver string) string {
+	if receiver == "" {
+		return ""
+	}
+
+	return "(" + receiver + ")"
 }
 
 func must(err error) {

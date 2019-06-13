@@ -1,6 +1,6 @@
 {{define "PackageFunc"}}
 <div class="PackageFunc">
-    <h2 id="{{.ID}}">func {{ .Name }}</h2>
+    <h2 id="{{.ID}}">func {{ methodReceiver .MethodReceiverString }} {{ .Name }}</h2>
     <pre>{{ .SignatureString }}</pre>
     {{template "PackageDoc" .Doc}}
     {{template "PackageExamples" .Examples}}

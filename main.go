@@ -39,21 +39,23 @@ var tt *template.Template
 
 func parseDev() {
 	tt = template.Must(template.New("root").Funcs(template.FuncMap{
-		"toLower":    strings.ToLower,
-		"subOne":     subOne,
-		"getVerLink": getVerLink,
-		"json":       getJSON,
-		"latestVer":  latestVer,
+		"toLower":        strings.ToLower,
+		"subOne":         subOne,
+		"getVerLink":     getVerLink,
+		"json":           getJSON,
+		"latestVer":      latestVer,
+		"methodReceiver": methodReceiver,
 	}).ParseGlob("frontend/templates/*.html"))
 }
 
 func parse() http.FileSystem {
 	root := template.New("root").Funcs(template.FuncMap{
-		"toLower":    strings.ToLower,
-		"subOne":     subOne,
-		"getVerLink": getVerLink,
-		"json":       getJSON,
-		"latestVer":  latestVer,
+		"toLower":        strings.ToLower,
+		"subOne":         subOne,
+		"getVerLink":     getVerLink,
+		"json":           getJSON,
+		"latestVer":      latestVer,
+		"methodReceiver": methodReceiver,
 	})
 	dist, err := fs.New()
 	must(err)
@@ -176,6 +178,14 @@ func latestVer(vers []string) string {
 
 func sortVersions(list []string) {
 	sort.Slice(list, func(i, j int) bool { return semver.Compare(list[i], list[j]) > 0 })
+}
+
+func methodReceiver(receiver string) string {
+	if receiver == "" {
+		return ""
+	}
+
+	return "(" + receiver + ")"
 }
 
 func must(err error) {

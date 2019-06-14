@@ -2,6 +2,20 @@ kind: pipeline
 name: default
 
 steps:
+- name: build
+  image: golang:1.12
+  commands:
+    - go test ./...
+  environment:
+    - GOPROXY=https://proxy.golang.org
+    - GO111MODULE=on
+  when:
+    branch:
+      - master
+    event:
+      - push
+      - pull_request
+
 - name: publish  
   image: plugins/gcr
   settings:

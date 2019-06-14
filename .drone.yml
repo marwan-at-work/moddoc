@@ -9,11 +9,10 @@ steps:
     repo: marwanio-192300/moddoc
     tags:
       - latest
-      - "${DRONE_COMMIT}"
     json_key:
       from_secret: google_credentials
   when:
     branch:
-      - dci
+      - master
     event:
       - push

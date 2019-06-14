@@ -7,7 +7,7 @@ steps:
   commands:
     - go test ./...
   environment:
-    GOPROXY: =https://proxy.golang.org
+    GOPROXY: https://proxy.golang.org
     GO111MODULE: on
   when:
     branch:

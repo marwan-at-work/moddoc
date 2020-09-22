@@ -2,8 +2,6 @@
 
 This is a server that takes a GOPROXY url as an argument and gives you a UI documentation similar to godoc.org except all data comes from the GOPROXY and not from VCS. 
 
-For a live demo, see https://moddoc.marwan.io which uses proxy.golang.org
-
 If your GOPROXY supports a /catalog endpoint, then you can see and search the list of existing modules on the home page. 
 
 ## Quick start
@@ -25,4 +23,5 @@ For example, http://localhost:3001/github.com/pkg/errors/@v/v0.8.1
 
 ## Status
 
-WIP
+This program was meant as a temporary workaround until the Go team launched their own Module aware doc website. 
+Now that they have, please feel free to use the more fully featured https://pkg.go.dev
